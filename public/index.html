@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>JanSamadhaan – Citizen Problem & Innovation Portal</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bitter:wght@600;700&family=Public+Sans:wght@400;500;600&display=swap">
+<style>
+:root{--bg:#eef2f4;--card:#fff;--ink:#14233b;--mute:#5b6b7d;--line:#d5dde3;--teal:#0f5c5c;--teal2:#d8ecea;--sun:#e8a317;--red:#b3261e;--green:#1f7a45;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1720;--card:#17222e;--ink:#e6edf3;--mute:#9fb0c0;--line:#2a3846;--teal:#5cc2bd;--teal2:#16363a;--sun:#f0b73a;--red:#ff8a80;--green:#6fd29a}}
+:root[data-theme="dark"]{--bg:#0f1720;--card:#17222e;--ink:#e6edf3;--mute:#9fb0c0;--line:#2a3846;--teal:#5cc2bd;--teal2:#16363a;--sun:#f0b73a;--red:#ff8a80;--green:#6fd29a}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 'Public Sans',system-ui,sans-serif}
+h1,h2,h3{font-family:Bitter,Georgia,serif;margin:0}
+header{background:var(--teal);color:#fff;padding:14px 18px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
+:root[data-theme="dark"] header,:root:not([data-theme="light"]) header{}
+header h1{font-size:1.35rem}header small{opacity:.85;display:block;font-family:'Public Sans',sans-serif}
+.role{display:flex;gap:6px;align-items:center;font-size:.9rem}
+select,input,textarea,button{font:inherit;color:var(--ink)}
+select,input[type=text],textarea{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:8px;background:var(--card)}
+header select{width:auto;background:#fff;color:#14233b}
+nav{display:flex;gap:4px;padding:10px 14px 0;overflow-x:auto;max-width:1000px;margin:0 auto}
+nav button{border:0;background:none;padding:10px 14px;border-bottom:3px solid transparent;cursor:pointer;color:var(--mute);font-weight:500;white-space:nowrap}
+nav button[aria-selected=true]{color:var(--teal);border-color:var(--sun)}
+main{max-width:1000px;margin:0 auto;padding:16px 14px 40px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:14px}
+.grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+label{display:block;font-weight:600;margin:10px 0 4px;font-size:.92rem}
+.btn{background:var(--teal);color:#fff;border:0;border-radius:8px;padding:10px 16px;cursor:pointer;font-weight:600}
+.btn.alt{background:var(--teal2);color:var(--teal)}.btn.sm{padding:5px 10px;font-size:.85rem}
+button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid var(--sun);outline-offset:2px}
+.tag{display:inline-block;padding:2px 9px;border-radius:99px;font-size:.78rem;font-weight:600;background:var(--teal2);color:var(--teal)}
+.tag.red{background:#fde7e5;color:#8c1a13}.tag.green{background:#dff3e6;color:#17613a}.tag.sun{background:#fbefcf;color:#6b4a00}
+.item{border-top:1px solid var(--line);padding:12px 0}.item:first-child{border-top:0}
+.meta{color:var(--mute);font-size:.86rem}
+.bar{height:10px;background:var(--teal2);border-radius:6px;overflow:hidden}.bar i{display:block;height:100%;background:var(--teal)}
+.stage{display:flex;gap:3px;margin-top:8px}.stage span{flex:1;height:6px;border-radius:3px;background:var(--line)}.stage span.on{background:var(--green)}
+.stat{font:700 2rem Bitter,serif;color:var(--teal)}
+.hint{color:var(--mute);font-size:.85rem}.err{color:var(--red);font-weight:600}
+.result{border-left:4px solid var(--sun);background:var(--teal2);padding:12px;border-radius:6px;margin-top:12px}
+</style></head><body>
+<header><div><h1>JanSamadhaan</h1><small>Citizen problem & innovation portal · all six modules</small></div>
+<div class="role"><label for="role" style="margin:0">Viewing as</label>
+<select id="role"><option value="citizen">Citizen</option><option value="gov">Government reviewer</option></select></div></header>
+<nav role="tablist" id="tabs"></nav>
+<main id="view"></main>
+<script>
+const STAGES=['Reported','AI analysed','Sanctioned','Matched with innovators','Prototype','Pilot','Deployed'];
+const DOMAINS={
+ 'Roads & Infrastructure':['road','pothole','bridge','footpath','streetlight','traffic','junction','pavement','construction'],
+ 'Waste & Sanitation':['garbage','waste','dump','sewage','toilet','sanitation','drain overflow','stink','bin','litter'],
+ 'Water & Drainage':['water','flood','drain','pipeline','leak','tap','tank','drinking','rain','waterlogging','overflowing'],
+ 'Electricity & Lights':['electric','power','light','lamp','transformer','voltage','outage','cut','wire'],
+ 'Public Safety':['unsafe','accident','crime','women','dark','theft','harass','fire','night','danger'],
+ 'Healthcare':['hospital','clinic','doctor','ambulance','medicine','fever','health','patients'],
+ 'Education':['school','teacher','students','classroom','college','books']};
+const URG={fire:30,flood:25,accident:25,ambulance:25,children:15,women:12,hospital:15,unsafe:15,dark:10,weeks:10,months:14,daily:8,patients:15,disease:20,sewage:12};
+const STOP=new Set('the a an and of to in on is are was for with near from has have had by at it this that there their we they our been very many not no'.split(' '));
+const ALLOWED=['image/jpeg','image/png','image/webp','application/pdf','audio/webm','audio/ogg','audio/mp4','audio/mpeg','audio/wav','audio/x-wav','video/mp4','video/webm'];
+const MAX=25*1024*1024, THRESH=0.6;
+let S={role:'citizen',tab:'report',items:[],log:[]};
+const seed=[['Garbage not collected near market','Garbage heaped for 2 weeks near the main market bin, stink and flies affecting shop owners.','Main Market, Madagadipet','Waste & Sanitation',5],
+ ['Water logging near school gate','Rain water flooding the road in front of the government school, students walk through dirty water daily.','Govt School Road, Villianur','Water & Drainage',3],
+ ['Streetlights off on walkway','8 streetlights not working for 3 weeks, women returning after 8 PM feel unsafe on this dark walkway.','Metro Gate 2 walkway','Public Safety',6]];
+function load(){try{const r=localStorage.getItem('jan_items');if(r)S.items=JSON.parse(r)}catch(e){}
+ if(!S.items.length){S.items=seed.map((s,i)=>mk(s[0],s[1],s[2],false,'—'+i)); S.items.forEach((x,i)=>{x.stage=Math.min(i+1,3)});save()}}
+function save(){try{localStorage.setItem('jan_items',JSON.stringify(S.items))}catch(e){}}
+const toks=t=>t.toLowerCase().replace(/[^a-z0-9\s]/g,' ').split(/\s+/).filter(w=>w.length>2&&!STOP.has(w));
+function classify(text){const t=text.toLowerCase();const sc={};let tot=0,hits={};
+ for(const[d,ws]of Object.entries(DOMAINS)){hits[d]=ws.filter(w=>t.includes(w));sc[d]=hits[d].length;tot+=sc[d]}
+ const top=Object.entries(sc).sort((a,b)=>b[1]-a[1])[0];
+ if(!tot)return{cat:'Other',conf:.3,hits:[]};
+ const conf=Math.min(.98,.35+.65*(top[1]/tot)*Math.min(1,top[1]/2));
+ return{cat:top[0],conf:+conf.toFixed(2),hits:hits[top[0]]}}
+function urgency(text){const t=text.toLowerCase();let s=20;for(const[k,v]of Object.entries(URG))if(t.includes(k))s+=v;return Math.min(100,s)}
+function sim(a,b){const A=new Set(toks(a)),B=new Set(toks(b));const i=[...A].filter(x=>B.has(x)).length;return i/(A.size+B.size-i||1)}
+function mk(title,desc,loc,anon,id){const text=title+' '+desc+' '+loc;const c=classify(text);const fl=flagsOf(desc);
+ let dup=null,best=0;S.items.forEach(o=>{const s=sim(text,o.title+' '+o.desc+' '+o.loc);if(s>best){best=s;dup=o}});
+ return{id:'CMP-'+(1000+S.items.length+1),title,desc,loc,anon,cat:c.cat,conf:c.conf,hits:c.hits,urg:urgency(text),
+  dupOf:best>=.3&&dup?dup.id:null,dupScore:+best.toFixed(2),status:fl.length?'Flagged':c.conf>=THRESH?'AI verified':'Manual review',flags:fl,dept:DEPT[c.cat]||'District Collector Office',stage:1,
+  date:new Date().toISOString().slice(0,10)}}
+const DEPT={'Roads & Infrastructure':'Public Works Dept','Waste & Sanitation':'Municipal Sanitation','Water & Drainage':'Water Supply & Drainage Board','Electricity & Lights':'Electricity Board','Public Safety':'Police & Safety Cell','Healthcare':'Health Dept','Education':'Education Dept'};
+const PART={'Roads & Infrastructure':['civil engineering faculty','smart-infrastructure industry'],'Waste & Sanitation':['environmental engineering lab','waste-tech startups'],'Water & Drainage':['water-resources lab','sensor and IoT startups'],'Electricity & Lights':['electrical and IoT student team','solar-lighting industry'],'Public Safety':['IoT and embedded systems cell','civic-technology industry'],'Healthcare':['medical college outreach','health-tech startups'],'Education':['education faculty','ed-tech partners']};
+const partners=c=>(PART[c]||['multidisciplinary student team']).join(' + ');
+function flagsOf(d){const f=[];if(d.length<25)f.push('Description is very short');if(/(.)\1{5,}/.test(d))f.push('Repeated characters');if(d.length>20&&d===d.toUpperCase())f.push('Written in all capitals');if(S.items.some(o=>o.desc===d))f.push('Exact copy of an earlier report');return f}
+function rVerify(){const q=S.items.filter(i=>!['Verified','Reviewed','Rejected'].includes(i.status)&&((i.flags||[]).length||i.dupOf));return`<div class="card"><h2>Verification desk</h2><p class="hint">Reports with warning signs or a similar earlier report wait here for a decision.</p>${q.length?q.map(i=>card(i)+`<p class="meta">${(i.flags||[]).map(esc).join(' · ')||'No content warnings'}${i.dupOf?' · Similar to '+i.dupOf+' (similarity '+i.dupScore+')':''}</p><p><button class="btn sm" data-ver="${i.id}">Mark genuine</button> <button class="btn alt sm" data-no="${i.id}">Reject</button></p>`).join(''):'<p>Nothing to verify.</p>'}</div>`}
+function rAlerts(){const a=S.items.filter(i=>i.urg>=60&&i.status!=='Rejected');return`<div class="card"><h2>Alerts & response</h2><p class="hint">Problems with urgency 60 or more raise an alert for the responsible department.</p>${a.length?a.map(i=>card(i)+`<p class="meta">Responsible: ${i.dept||'District Collector Office'}${i.assignee?' · Assigned':''}${i.ack?' · Acknowledged':''}${i.escalated?' · Escalated to District Collector':''}</p><p>${i.assignee?'':`<button class="btn sm" data-asg="${i.id}">Assign to department</button> `}${i.ack?'':`<button class="btn alt sm" data-ack="${i.id}">Acknowledge</button> `}${i.escalated?'':`<button class="btn alt sm" data-esc="${i.id}">Escalate</button>`}</p>`).join(''):'<p>No alerts. Urgent problems will appear here.</p>'}</div><div class="card"><h2>Notifications sent</h2>${S.log.length?S.log.map(l=>`<p class="meta" style="margin:4px 0">${esc(l)}</p>`).join(''):'<p class="hint">Nothing sent yet.</p>'}</div>`}
+function rCmd(){const d={};S.items.forEach(i=>{const k=i.dept||'District Collector Office';d[k]=d[k]||{n:0,o:0};d[k].n++;if(i.stage<7)d[k].o++});const st=STAGES.map((s,k)=>S.items.filter(i=>i.stage===k+1).length);return`<div class="grid"><div class="card"><div class="stat">${S.items.filter(i=>i.urg>=60&&!i.ack).length}</div>Alerts not yet acknowledged</div><div class="card"><div class="stat">${S.items.filter(i=>i.escalated).length}</div>Escalated to the Collector</div></div><div class="card"><h2>Department workload</h2>${Object.entries(d).map(([k,v])=>`<p style="margin:8px 0 2px">${k} <span class="meta">${v.o} open of ${v.n}</span></p><div class="bar"><i style="width:${v.o/v.n*100}%"></i></div>`).join('')}</div><div class="card"><h2>Lifecycle pipeline</h2>${STAGES.map((s,k)=>`<p class="meta" style="margin:4px 0">${s}: <b>${st[k]}</b></p>`).join('')}</div><div class="card"><h2>Integration feed</h2><p class="hint">JSON payload for government e-governance systems. Copy it into the receiving system.</p><textarea rows="6" readonly>${esc(JSON.stringify(S.items.map(i=>({id:i.id,category:i.cat,urgency:i.urg,status:i.status,stage:STAGES[i.stage-1],department:i.dept,location:i.loc}))))}</textarea><p><button class="btn alt sm" data-reset="1">Reset demo data</button></p></div>`}
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function render(){
+ const tabs=[['report','Report a problem'],['problems','Problems'],['dash','Dashboard']];
+ if(S.role==='gov')tabs.push(['review','Review queue'],['verify','Verification desk'],['alerts','Alerts & response'],['cmd','Command centre']);
+ if(!tabs.some(t=>t[0]===S.tab))S.tab='report';
+ document.getElementById('tabs').innerHTML=tabs.map(t=>`<button role="tab" aria-selected="${S.tab===t[0]}" data-t="${t[0]}">${t[1]}</button>`).join('');
+ document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>{S.tab=b.dataset.t;render()});
+ const v=document.getElementById('view');v.innerHTML={report:rReport,problems:rProblems,dash:rDash,review:rReview,verify:rVerify,alerts:rAlerts,cmd:rCmd}[S.tab]();
+ if(S.tab==='report')bindReport()}
+function rReport(){return`<div class="grid"><div class="card"><h2>Describe the problem</h2>
+<p class="hint">Write in your own words. The system finds the category, urgency and any similar reports for you.</p>
+<label for="t">Problem summary</label><input type="text" id="t" placeholder="e.g. Deep potholes on school road">
+<label for="d">What is happening?</label><textarea id="d" rows="4" placeholder="How long, who is affected, how serious"></textarea>
+<label for="l">Location or landmark</label><input type="text" id="l" placeholder="Street, ward or landmark">
+<label for="f">Evidence (photo, audio, video or PDF, up to 25 MB)</label><input type="file" id="f">
+<label><input type="checkbox" id="a"> Keep my submission anonymous to the public</label>
+<p id="msg" class="err" role="alert"></p>
+<button class="btn" id="go">Submit problem</button></div>
+<div class="card"><h2>Speak instead</h2><p class="hint">For voice reports pick a language, press record and speak. Your words are placed in the description for you to edit.</p>
+<label for="lang">Language</label><select id="lang"><option value="en-IN">English</option><option value="ta-IN">தமிழ் (Tamil)</option><option value="te-IN">తెలుగు (Telugu)</option><option value="ml-IN">മലയാളം (Malayalam)</option><option value="hi-IN">हिन्दी (Hindi)</option><option value="fr-FR">Français</option></select>
+<p><button class="btn alt" id="mic">Record voice report</button></p><p id="vs" class="hint"></p>
+<div id="out"></div></div></div>`}
+function bindReport(){
+ document.getElementById('go').onclick=()=>{const m=document.getElementById('msg');m.textContent='';
+  const t=g('t'),d=g('d'),l=g('l');if(!t||!d||!l){m.textContent='Fill in the summary, description and location.';return}
+  const f=document.getElementById('f').files[0];
+  if(f){if(!ALLOWED.includes(f.type)){m.textContent='This file type is not accepted. Upload a JPEG, PNG, WebP, PDF, audio or video file.';return}
+   if(f.size>MAX){m.textContent='The file is larger than 25 MB. Upload a smaller file.';return}}
+  const it=mk(t,d,l,document.getElementById('a').checked);if(f)it.file=f.name;S.items.unshift(it);save();
+  document.getElementById('out').innerHTML=`<div class="result"><b>Complaint ${it.id} registered</b><br>
+  Category: <b>${it.cat}</b> · confidence ${Math.round(it.conf*100)}%<br>Urgency score: <b>${it.urg}/100</b><br>
+  ${it.dupOf?`Similar to ${it.dupOf} (similarity ${it.dupScore}) — linked, not counted as a new problem.<br>`:'No similar report found.<br>'}
+  Reason: matched words ${it.hits.length?it.hits.map(esc).join(', '):'none'}.<br>
+  Status: <span class="tag ${it.status==='AI verified'?'green':'sun'}">${it.status}</span> ${it.status==='Manual review'?'— confidence is below the threshold, so a reviewer will check it.':''}</div>`;
+  ['t','d','l'].forEach(i=>document.getElementById(i).value='')};
+ const mic=document.getElementById('mic'),vs=document.getElementById('vs');const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+ mic.onclick=()=>{if(!SR){vs.textContent='Voice input is not supported in this browser. Type the description instead.';return}
+  try{const r=new SR();r.lang=document.getElementById('lang').value;vs.textContent='Listening…';
+   r.onresult=e=>{document.getElementById('d').value=e.results[0][0].transcript;vs.textContent='Transcript added. Edit it, then submit.'};
+   r.onerror=e=>vs.textContent='Could not record ('+e.error+'). Check microphone permission and try again.';r.start()}catch(e){vs.textContent='Voice input could not start.'}}}
+const g=i=>document.getElementById(i).value.trim();
+function card(i){return`<div class="item"><b>${esc(i.title)}</b> <span class="tag">${i.cat}</span> <span class="tag ${i.urg>=60?'red':'sun'}">Urgency ${i.urg}</span>
+<span class="tag ${i.status==='AI verified'?'green':(i.status==='Rejected'||i.status==='Flagged')?'red':(i.status==='Verified'||i.status==='Reviewed')?'green':'sun'}">${i.status}</span>
+<div class="meta">${i.id} · ${esc(i.loc)} · ${i.date}${i.anon?' · reporter hidden':''}${i.dupOf?' · duplicate of '+i.dupOf:''}</div><p style="margin:6px 0">${esc(i.desc)}</p>
+<div class="meta">Stage: ${STAGES[i.stage-1]}${i.stage>=3?' · Suggested partners: '+partners(i.cat):''}</div><div class="stage">${STAGES.map((s,k)=>`<span class="${k<i.stage?'on':''}" title="${s}"></span>`).join('')}</div>`+
+ (S.role==='gov'&&S.tab==='problems'&&i.stage<7?`<p><button class="btn alt sm" data-adv="${i.id}">Move to: ${STAGES[i.stage]}</button></p>`:'')+`</div>`}
+function rProblems(){return`<div class="card"><h2>All reported problems</h2>${S.items.length?S.items.map(card).join(''):'<p>No problems yet. Report the first one.</p>'}</div>`}
+function rDash(){const n=S.items.length,c={};S.items.forEach(i=>c[i.cat]=(c[i.cat]||0)+1);
+ const dup=S.items.filter(i=>i.dupOf).length,rev=S.items.filter(i=>i.status==='Manual review').length,dep=S.items.filter(i=>i.stage>=6).length;
+ return`<div class="grid"><div class="card"><div class="stat">${n}</div>Problems logged</div><div class="card"><div class="stat">${dup}</div>Linked as duplicates</div>
+<div class="card"><div class="stat">${rev}</div>Waiting for manual review</div><div class="card"><div class="stat">${dep}</div>In pilot or deployed</div></div>
+<div class="card"><h2>Problems by category</h2>${Object.entries(c).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<p style="margin:8px 0 2px">${k} <span class="meta">${v} (${Math.round(v/n*100)}%)</span></p><div class="bar"><i style="width:${v/n*100}%"></i></div>`).join('')}</div>`}
+function rReview(){const q=S.items.filter(i=>i.status==='Manual review');
+ return`<div class="card"><h2>Review queue</h2><p class="hint">Results below ${Math.round(THRESH*100)}% confidence wait here for a person to confirm the category.</p>
+ ${q.length?q.map(i=>card(i)+`<p><select data-cat="${i.id}" aria-label="Category for ${i.id}">${Object.keys(DOMAINS).concat('Other').map(c=>`<option ${c===i.cat?'selected':''}>${c}</option>`).join('')}</select></p>
+ <p><button class="btn sm" data-ok="${i.id}">Confirm category</button> <button class="btn alt sm" data-no="${i.id}">Reject</button></p>`).join(''):'<p>The queue is empty. New low-confidence results will appear here.</p>'}</div>`}
+document.addEventListener('click',e=>{const t=e.target;let id;
+ if(id=t.dataset.adv){const i=S.items.find(x=>x.id===id);i.stage++;save();render()}
+ if(id=t.dataset.ok){const i=S.items.find(x=>x.id===id);i.cat=document.querySelector(`[data-cat="${id}"]`).value;i.status='Reviewed';i.conf=1;save();render()}
+ if(id=t.dataset.no){S.items.find(x=>x.id===id).status='Rejected';save();render()}
+ if(id=t.dataset.ver){S.items.find(x=>x.id===id).status='Verified';save();render()}
+ if(id=t.dataset.asg){const i=S.items.find(x=>x.id===id);i.assignee=i.dept;if(i.stage<3)i.stage=3;S.log.unshift('SMS to reporter: '+id+' assigned to '+i.dept);save();render()}
+ if(id=t.dataset.ack){const i=S.items.find(x=>x.id===id);i.ack=true;S.log.unshift('Alert '+id+' acknowledged by '+(i.dept||'department'));save();render()}
+ if(id=t.dataset.esc){const i=S.items.find(x=>x.id===id);i.escalated=true;S.log.unshift('Alert '+id+' escalated to District Collector');save();render()}
+ if(t.dataset.reset){try{localStorage.removeItem('jan_items')}catch(e){}S.items=[];S.log=[];load();render()}});
+document.getElementById('role').onchange=e=>{S.role=e.target.value;render()};
+load();render();
+</script></body></html>
